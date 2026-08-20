@@ -12,7 +12,7 @@ if TURSO_DATABASE_URL and TURSO_AUTH_TOKEN:
     
     engine = create_engine(
         db_url,
-        connect_args={"authToken": TURSO_AUTH_TOKEN}
+        connect_args={"auth_token": TURSO_AUTH_TOKEN}
     )
 else:
     # --- LOCAL DEVELOPMENT MODE: Standard SQLite ---
