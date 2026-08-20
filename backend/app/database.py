@@ -1,6 +1,13 @@
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.dialects import registry
+
+# --- VERCEL BUG FIX: Explicitly register the Turso plugin ---
+try:
+    registry.register("sqlite.libsql", "sqlalchemy_libsql.dialect", "dialect")
+except Exception:
+    pass
 
 TURSO_DATABASE_URL = os.environ.get("TURSO_DATABASE_URL")
 TURSO_AUTH_TOKEN = os.environ.get("TURSO_AUTH_TOKEN")
