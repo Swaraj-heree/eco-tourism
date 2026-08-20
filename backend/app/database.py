@@ -1,32 +1,19 @@
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
-from sqlalchemy.dialects import registry
 
-# --- VERCEL BUG FIX: Explicitly register the Turso plugin ---
-try:
-    registry.register("sqlite.libsql", "sqlalchemy_libsql.dialect", "dialect")
-except Exception:
-    pass
+DATABASE_URL = os.environ.get("DATABASE_URL") or os.environ.get("TURSO_DATABASE_URL")
 
-TURSO_DATABASE_URL = os.environ.get("TURSO_DATABASE_URL")
-TURSO_AUTH_TOKEN = os.environ.get("TURSO_AUTH_TOKEN")
-
-if TURSO_DATABASE_URL and TURSO_AUTH_TOKEN:
-    # --- PRODUCTION MODE: Vercel + Turso Cloud ---
-    
-    # Clean the URL and strictly format it for the pure-Python client
-    clean_url = TURSO_DATABASE_URL.replace("libsql://", "").replace("https://", "")
-    db_url = f"sqlite+libsql://{clean_url}/?secure=true"
-    
-    engine = create_engine(
-        db_url,
-        connect_args={"auth_token": TURSO_AUTH_TOKEN}
-    )
+if DATABASE_URL:
+    # --- PRODUCTION MODE: Render PostgreSQL ---
+    # Render URLs often start with postgres://, but SQLAlchemy requires postgresql://
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+        
+    engine = create_engine(DATABASE_URL)
 else:
     # --- LOCAL DEVELOPMENT MODE: Standard SQLite ---
     SQLALCHEMY_DATABASE_URL = "sqlite:///./eco_tourism.db"
-    
     engine = create_engine(
         SQLALCHEMY_DATABASE_URL, 
         connect_args={"check_same_thread": False}
