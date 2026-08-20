@@ -1,5 +1,4 @@
 import os
-import libsql
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
@@ -7,19 +6,15 @@ TURSO_DATABASE_URL = os.environ.get("TURSO_DATABASE_URL")
 TURSO_AUTH_TOKEN = os.environ.get("TURSO_AUTH_TOKEN")
 
 if TURSO_DATABASE_URL and TURSO_AUTH_TOKEN:
-    # --- PRODUCTION MODE: Vercel + Turso Cloud (AWS) ---
+    # --- PRODUCTION MODE: Vercel + Turso Cloud ---
     
-    # 1. Force HTTP connection (Vercel serverless works best with HTTP)
-    http_url = TURSO_DATABASE_URL.replace("libsql://", "https://")
+    # Clean the URL and strictly format it for the pure-Python client
+    clean_url = TURSO_DATABASE_URL.replace("libsql://", "").replace("https://", "")
+    db_url = f"sqlite+libsql://{clean_url}/?secure=true"
     
-    # 2. Inject the official libsql SDK directly
-    def turso_connector():
-        return libsql.connect(database=http_url, auth_token=TURSO_AUTH_TOKEN)
-        
     engine = create_engine(
-        "sqlite://",  # This empty sqlite URL stops SQLAlchemy from looking for the broken plugin!
-        creator=turso_connector,
-        connect_args={"check_same_thread": False}
+        db_url,
+        connect_args={"auth_token": TURSO_AUTH_TOKEN}
     )
 else:
     # --- LOCAL DEVELOPMENT MODE: Standard SQLite ---
